@@ -1,0 +1,76 @@
+{plik USMARC.VPR - wyœwietlanie dla serwera TCP/USMARC}
+   
+procedure print_subfield
+   begin
+   odpowiedz = odpowiedz+'"'+podpole_index+'" : "'+subfield(POLE, podpole)+'", '
+   end
+   
+procedure print_leader
+   begin
+   GRUPA('001')
+      GRUPA('Z')
+      odpowiedz = odpowiedz+'"id" : "'+POLE+'", '
+      BACK
+   BACK
+   GRUPA('N')
+      odpowiedz = odpowiedz+'"rec_id" : "'+POLE+'", '
+   BACK
+   end
+   
+procedure placowka
+   begin
+   [PLIK adaptacje\Ursus\Ursus-AGENDA.INC]
+   lokalizacja=trim(subfield(pole,'h'))
+   agenda = form(tail(lista, inw+'='), 'A')
+   
+   agendy = '|'+cfg('CFG_AGENDY')+'|'
+   agenda = head(tail(agendy, '|'+agenda+'|'), '|')
+   odpowiedz = odpowiedz+'"agenda": "'+agenda+'", '
+  
+   identyfikator=trim(replace(subfield(pole,'p'),'-',''))
+   aux=external('WYPS'+identyfikator)
+   status=trim(head(aux,'|'))
+   odpowiedz=odpowiedz+'"status": "'+status+'",'
+   
+   data=tail(tail(tail(external('WYPW'+replace(identyfikator,'-','')), '|'), '|'), '|')
+   odpowiedz = odpowiedz+'"duedate": "'+data+'"'
+   end
+   
+procedure print_specimens
+   begin
+   GRUPA('949')
+   
+   odpowiedz = odpowiedz+'"specimens": ['
+   while ok
+         odpowiedz = odpowiedz+'{'
+         GRUPA('Z')
+         podpole='p'
+         podpole_index = 's_n'
+         print_subfield
+         podpole='a'
+         podpole_index = 'callnumber'
+         print_subfield
+         placowka
+         BACK
+         odpowiedz = odpowiedz+'}'
+      SKIP
+      if ok
+         odpowiedz = odpowiedz+', '
+      endif
+   enddo
+   odpowiedz = odpowiedz+']'
+   trace(odpowiedz)
+   BACK
+   end
+  
+
+
+begin
+odpowiedz = ''
+odpowiedz = odpowiedz+'{'
+print_leader
+print_specimens
+odpowiedz = odpowiedz+'}'
+print(odpowiedz)
+[PLIK MULTIMEDIA.INC]
+end
